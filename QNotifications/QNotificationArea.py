@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from qtpy import QtWidgets, QtCore, QtGui
+from PySide2 import QtWidgets, QtCore, QtGui
 from QNotifications.QNotification import QNotification
 from QNotifications.abstractions import *
 
@@ -89,6 +89,8 @@ class QNotificationArea(QtWidgets.QWidget):
 			(up to maxMessages at the same time)
 		maxMessages : int (default: 2)
 			The number of messages to display at the same time.
+		location : str (default: 'manageprojectdialog')
+			Where this notification area is. Allows for differing placement.
 
 		Raises
 		------
@@ -101,7 +103,8 @@ class QNotificationArea(QtWidgets.QWidget):
 		# Pop some variables from kwargs.
 		useGlobalCSS = kwargs.pop(u'useGlobalCSS', False)
 		self.useQueue = kwargs.pop(u'useQueue', True)
-		self.maxMessages = kwargs.pop(u'maxMessages', 2)
+		self.maxMessages = kwargs.pop(u'maxMessages', 1)
+		self.location = kwargs.pop(u'location', 'manageprojectdialog')
 
 		super(QNotificationArea, self).__init__(*args, **kwargs)
 
@@ -130,6 +133,10 @@ class QNotificationArea(QtWidgets.QWidget):
 		# Overwrite resizeEvent function of targetWidget to capture it ourself
 		# (parent's resizeEvent will be called in our function too)
 		self.targetWidget.resizeEvent = self.resizeEvent
+
+		# Tracks visible notifications in order to prevent duplicates
+		self.visibleNotifs = []
+
 		self.hide()
 
 	def __delete_notification(self, notification=None):
@@ -240,6 +247,11 @@ class QNotificationArea(QtWidgets.QWidget):
 		notification = QNotification(message, category, timeout, autohide, buttontext, self)
 		notification.closeClicked.connect(self.remove)
 
+		# Avoids double notifications
+		for ntf in self.visibleNotifs + list(self.queue.queue):
+			if ntf.message == notification.message:
+				return
+
 		# Queue if max amount of notifications is shown
 		if self.useQueue and self.layout().count() >= self.maxMessages:
 			self.queue.put(notification)
@@ -251,7 +263,30 @@ class QNotificationArea(QtWidgets.QWidget):
 			self.show()
 			self.raise_()
 
+			# Getting screenwidth proportion so that calculations adapt to screen resolution
+			screen = QtWidgets.QApplication.instance().primaryScreen()
+			screenGeom = screen.geometry()
+			scrnWdth = screenGeom.width()
+			scrnHght = screenGeom.height()
+
+			if screen.isLandscape(screen.primaryOrientation()):  # use height for proportion calc. Some screens are ultrawide
+				prop = scrnHght / 1080
+			else:
+				prop = scrnWdth / 1920
+
+			if self.location == 'manageprojectdialog':
+				diff = 24 * prop
+				self.setFixedWidth(self.width()-diff)
+				self.move(self.x() + diff, self.y())
+			elif self.location == 'facileview':
+				newWidth = 350 * prop
+				newX = QtWidgets.QApplication.instance().primaryScreen().geometry().width() - newWidth
+				newY = QtWidgets.QApplication.instance().primaryScreen().geometry().height() - 150*prop
+				self.setFixedWidth(newWidth)
+				self.move(newX, newY)
+
 		self.layout().addWidget(notification)
+		self.visibleNotifs.append(notification)
 
 		# Check for entry effects
 		if not self.entryEffect is None:
@@ -306,6 +341,8 @@ class QNotificationArea(QtWidgets.QWidget):
 			notification.fadeOut(self.__delete_notification, self.exitEffectDuration)
 		else:
 			self.__delete_notification(notification)
+
+		self.visibleNotifs.remove(notification)
 
 	# Internal Qt functions
 	def resizeEvent(self, event):

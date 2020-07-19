@@ -4,7 +4,7 @@ Created on Fri Mar 11 13:11:14 2016
 
 """
 import sys
-from qtpy import QtCore
+from PySide2 import QtCore
 
 if sys.version_info >= (3,0,0):
 	py3 = True

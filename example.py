@@ -23,7 +23,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from qtpy import QtWidgets, QtCore
+from PySide2 import QtWidgets, QtCore
 import QNotifications
 
 __author__ = u"Daniel Schreij"
@@ -189,7 +189,7 @@ class Example(QtCore.QObject):
 if __name__ == "__main__":
 	app = QtWidgets.QApplication(sys.argv)
 
-	print(QtCore.PYQT_VERSION_STR)
+	# print(QtCore.PYQT_VERSION_STR)
 
 	# Enable High DPI display with PyQt5
 	if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):

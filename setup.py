@@ -25,12 +25,12 @@ import QNotifications
 setup(
 	name=u'qnotifications' if u'bdist_deb' in sys.argv else 'python-qnotifications',
 	version=QNotifications.__version__,
-	description='Pretty in-app notifications for PyQt',
+	description='Pretty in-app notifications for PySide2',
 	author='Daniel Schreij',
 	author_email='dschreij@gmail.com',
 	url='https://github.com/dschreij/QNotifications',
 	packages=find_packages('.'),
-	install_requires=['qtpy'],
+	install_requires=['PySide2'],
 	classifiers=[
 		'Intended Audience :: Developers',
 		'Topic :: Desktop Environment',
